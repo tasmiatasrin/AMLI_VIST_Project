@@ -32,7 +32,7 @@ def preprocess_stories(home_dir, pickle_dir, story_data, story_keys):
     return story_keys
 
 
-def grab_features(home_dir, pickle_dir, story_data):
+def grab_features(home_dir, pickle_dir, story_data, story_keys):
     
     os.chdir(pickle_dir) # change to pkl directory
 

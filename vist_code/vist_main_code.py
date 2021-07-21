@@ -1,27 +1,30 @@
 import argparse
+from methods import grab_features, preprocess_stories, vect_sentences
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from build_vocab_v2 import Vocabulary
+# from build_vocab_v2 import Vocabulary
 from torchvision import transforms
-from data_loader_advice_gen import get_loader
+from data_loader_vist import get_loader
 #from frogger_dataset_preprocessed import FroggerDataset
 import pickle
 from PIL import Image
-from frogger_dataset_gen import FroggerDataset
+# from frogger_dataset_gen import FroggerDataset
 import os
 import torchvision.models as models
 import numpy as np
 import sys
 import json
-import cv2
+# import cv2
 from advice_models import image_EncoderCNN, DecoderRNN, EncoderCNN
 import random
 from math import floor
 import re
 import json
 
+
+# model parameters
 # num_epochs = 101
 #total_step = 50
 
@@ -75,28 +78,28 @@ import json
 
 
 
-# def weight_gloVe(target_vocab):
-#     # words = pickle.load(open(f'glove.6B/6B.300_words.pkl', 'rb'))
-#     # word2idx = pickle.load(open(f'glove.6B/6B.300_idx.pkl', 'rb'))
-#     # vectors = bcolz.open(f'glove.6B/6B.300.dat')[:]
-#     glove = pickle.load(open(f'glove/6B_300_words_emb.pkl', 'rb'))
+def weight_gloVe(target_vocab):
+    # words = pickle.load(open(f'glove.6B/6B.300_words.pkl', 'rb'))
+    # word2idx = pickle.load(open(f'glove.6B/6B.300_idx.pkl', 'rb'))
+    # vectors = bcolz.open(f'glove.6B/6B.300.dat')[:]
+    glove = pickle.load(open(f'glove/6B_300_words_emb.pkl', 'rb'))
 
-#     matrix_len = len(target_vocab.word2idx)
-#     weights_matrix = np.zeros((matrix_len, 300))
-#     words_found = 0
-#     emb_dim = 300
+    matrix_len = len(target_vocab.word2idx)
+    weights_matrix = np.zeros((matrix_len, 300))
+    words_found = 0
+    emb_dim = 300
 
-#     for i in range(matrix_len):
-#         word = target_vocab.idx2word[i]
-#         try: 
-#             weights_matrix[i] = glove[word]
-#             words_found += 1
-#         except KeyError:
-#             weights_matrix[i] = np.random.normal(scale=0.6, size=(emb_dim, ))
+    for i in range(matrix_len):
+        word = target_vocab.idx2word[i]
+        try: 
+            weights_matrix[i] = glove[word]
+            words_found += 1
+        except KeyError:
+            weights_matrix[i] = np.random.normal(scale=0.6, size=(emb_dim, ))
     
-#     print("words_found: ", words_found)
+    print("words_found: ", words_found)
     
-#     return weights_matrix
+    return weights_matrix
 
 
 
@@ -163,51 +166,93 @@ def main(args):
 
     os.chdir(home_dir)
 
-    pickle_dir = '/Users/javi/Desktop/AMLI/Capstone/1_story_dictionary_and_pickles/pickles/'
+    # grab train, test, val data
+
+    # train data
+    train_pickle_dir = '/Users/javi/Desktop/AMLI/Capstone/1_story_dictionary_and_pickles/pickles/'
 
     # open JSON file
     d = open('tsplit1_dictionary.json')
     v = open('6_complete_vocabulary.json') # vocabulary
 
     # returns JSON object as a dictionary
-
-    story_data = json.load(d)
-    vocab = json.load(v)
+    train_story_data = json.load(d)
+    vocab = json.load(v) # do I need to seperate the vocab for test and val or can it be all in one vocabulary
 
     # close file
     d.close
     v.close
 
     # grab the keys
-    story_keys = [key for key in story_data.keys()]
-    print(f'Number of story ids: {len(story_keys)}')
+    train_story_keys = [key for key in train_story_data.keys()]
+    print(f'Number of story ids: {len(train_story_keys)}')
 
-    # preprocess the data
-    story_keys = preprocess_stories(home_dir, pickle_dir, story_data, story_keys): 
+    # this code works
+    # # preprocess the data
+    # train_story_keys = preprocess_stories(home_dir, pickle_dir, train_story_data, train_story_keys)
 
-    # grab the image features
-    train_image_features = grab_features(home_dir, pickle_dir, story_data, story_keys)
+    # # grab the image features
+    # train_image_features = grab_features(home_dir, pickle_dir, story_data, story_keys)
 
-    # vectorize sentences
-    train_sentences(story_data, story_keys, vocab)
-
-
-
+    # # vectorize sentences
+    # train_sentences = vect_sentences(story_data, story_keys, vocab)
 
 
+    pass # change this
+    # # test data
+    # # train data
+    # test_pickle_dir = '/Users/javi/Desktop/AMLI/Capstone/1_story_dictionary_and_pickles/pickles_test/'
 
-    # train_transform = transforms.Compose([
-    #     transforms.RandomCrop(args.image_size),
-    #     transforms.RandomHorizontalFlip(),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.485, 0.456, 0.406),
-    #                         (0.229, 0.224, 0.225))])
+    # # open JSON file
+    # d = open('tsplit1_dictionary.json')
+    # v = open('6_complete_vocabulary.json') # vocabulary
 
-    # val_transform = transforms.Compose([
-    #     transforms.Resize(args.image_size, interpolation=Image.LANCZOS),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.485, 0.456, 0.406),
-    #                         (0.229, 0.224, 0.225))])
+    # # returns JSON object as a dictionary
+    # train_story_data = json.load(d)
+    # vocab = json.load(v) # do I need to seperate the vocab for test and val or can it be all in one vocabulary
+
+    # # close file
+    # d.close
+    # v.close
+
+    # # grab the keys
+    # train_story_keys = [key for key in train_story_data.keys()]
+    # print(f'Number of story ids: {len(train_story_keys)}')
+
+    # val data
+
+    train_image_features = []
+
+    train_sentences = []
+
+    batch_size = 8
+
+    # vist_dataset = get_loader(train_image_features, train_sentences, train_transform, batch_size = 8,num_workers=0)
+
+    # vist_dataset = get_loader(
+    #     vocab = vocab, 
+    #     sentences = train_sentences,
+    #     images = train_image_features, 
+    #     pickle_dir=train_pickle_dir, 
+    #     home_dir = home_dir,
+    #     batch_size=batch_size,
+    #     num_workers=0)
+
+
+
+
+    train_transform = transforms.Compose([
+        transforms.RandomCrop(args.image_size),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406),
+                            (0.229, 0.224, 0.225))])
+
+    val_transform = transforms.Compose([
+        transforms.Resize(args.image_size, interpolation=Image.LANCZOS),
+        transforms.ToTensor(),
+        transforms.Normalize((0.485, 0.456, 0.406),
+                            (0.229, 0.224, 0.225))])
         
     # frogger_dataset_ob = FroggerDataset('Turk_Master_File_sorted.xlsx', in_vocab)
     # #tr_good_ids, te_good_ids, tr_indices, te_indices, training_rationalizations, testing_rationalizations = frogger_dataset_ob.load_data()
@@ -243,27 +288,32 @@ def main(args):
     
         
 
+    # Tasmia's code
+    # train_data_loader, val_data_loader = update_data_loader (frogger_dataset_ob, all_good_ids, data_indices, all_good_rationalizations)
 
-    # print("good_ids: ",len(all_good_ids))
-    train_data_loader, val_data_loader = update_data_loader(
-        train_sentences, train_image_features, pickle_dir, home_dir,
-        batch_size, vocab, train_transform,num_workers=0)
+
+    # # print("good_ids: ",len(all_good_ids))
+    # train_data_loader, val_data_loader = update_data_loader(
+    #     train_sentences, train_image_features, pickle_dir, home_dir,
+    #     batch_size, vocab, train_transform,num_workers=0)
 
 
 
     ##### This is where I stoppped, right before the model
+    ### I think the code below is for the model
 
 
  
     #cur_training_images, cur_test_images = frogger_dataset_ob.load_images(current_image_dir, tr_good_ids, te_good_ids,tr_indices)
     
         
-    # train_data_loader = get_loader(in_vocab,training_rationalizations,cur_training_images,
-    #                             current_image_dir, args.batch_size, train_transform,
-    #                             shuffle=True, num_workers=0)
-    # val_data_loader = get_loader(in_vocab,testing_rationalizations,cur_test_images,
-    #                             current_image_dir,args.batch_size, val_transform,
-    #                             shuffle=True, num_workers=0)
+    train_data_loader = get_loader(
+        vocab, train_image_features, train_sentences, train_transform,
+        batch_size = args.batch_size, shuffle=True, num_workers=0)
+
+    # val_data_loader = get_loader(
+    #     vocab, test_image_features, test_sentences, test_transform,
+    #     batch_size = args.batch_size, shuffle=True, num_workers=0)
 
     # val_losses = []
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
