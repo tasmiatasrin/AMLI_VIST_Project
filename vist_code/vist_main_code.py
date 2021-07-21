@@ -557,4 +557,4 @@ if __name__ == '__main__':
 #     print("caption_str: ", caption_str)
     
 #     return encoded_img, caption_str
-    
+ 
