@@ -2,6 +2,19 @@ import os
 import json
 import pickle as pkl
 import re
+import numpy as np
+
+# def create_max_action_seq (seq):
+#     max_seq_len = 18
+#     seq_len = len(seq)
+#     action_list = [-1]* max_seq_len
+#     for i, act in enumerate(seq):
+#         if i == max_seq_len: 
+#             break
+#         if act in actions_map:
+#             action_list[i]= actions_map[act]                  
+#     return action_list
+
 
 def preprocess_stories(home_dir, pickle_dir, story_data, story_keys):
     
@@ -68,12 +81,27 @@ def grab_features(home_dir, pickle_dir, story_data, story_keys):
 
     return features, img_names
 
+def padding(v_sentence):
+
+    if len(v_sentence) < 18:
+        while len(v_sentence) != 18:
+            v_sentence.append(-1)
+
+    else:
+        while len(v_sentence) != 18:
+            v_sentence = v_sentence[:-1]
+
+    # print(len(v_sentence))
+    return v_sentence
+
+
 
 def vect_sentences(story_data, story_keys, vocab):
     
     # vectorize
 
     vector_sentences = []
+    len_sent = []
 
     for key in story_keys: # grab each story id
         for sentence in story_data[key]['sentences']: # grab sentence from sentence list
@@ -85,12 +113,24 @@ def vect_sentences(story_data, story_keys, vocab):
                 word = word.lower()
                 v_word = vocab[word]
                 v_sentence.append(v_word)
-            vector_sentences.append(v_sentence) # store the set of 5 sentences
 
-            if len(vector_sentences) == 10000:
+
+            # add the padding
+            if len(v_sentence) != 18:
+                v_sentence = padding(v_sentence)
+
+            vector_sentences.append(v_sentence) # store the set of 5 sentences
+            
+            # len_sent.append(len(v_sentence)) # store the length of vectorized sentences
+
+            if len(vector_sentences) == 1000:
                 break
-        if len(vector_sentences) == 10000:
-                break
+        if len(vector_sentences) == 1000:
+            break
+
+    # use this to test the length, it should be 18
+    # percentile = np.percentile(len_sent, 95)
+    # print(percentile)    
 
     print(f'Finished! Length of sentences: {len(vector_sentences)}') 
 

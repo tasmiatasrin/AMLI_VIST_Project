@@ -39,6 +39,10 @@ class VistDataLoader(data.Dataset):
         x = torch.Tensor(img_features)
         y = torch.Tensor(vect_sent) # add padding if this throws an error
         
+        # print(y, len(y), type(y)) #img_name, len(img_name), x, len(x), 
+
+        # print(len(img_name), len(x), len(y))
+
         return img_name, x, y
         
 
@@ -46,6 +50,10 @@ class VistDataLoader(data.Dataset):
 
 def get_loader(vocab, image_features, image_names, v_sent, transform, batch_size, shuffle, num_workers): # maybe add transform, pkl_dir, vocab
     vist = VistDataLoader(vocab, v_sent, image_features, image_names)
+
+    # print(f"hellooo {len(vist.v_sent)}")
+    print(f' I think this tis the length of the train/val vectorized sentences: {vist.v_sent[0]}')
+    print(f'How do I just grab a "batch_size" of sentences?')
     
     data_loader = torch.utils.data.DataLoader(dataset=vist, batch_size=batch_size, num_workers=num_workers) # default collate_fn
     return data_loader

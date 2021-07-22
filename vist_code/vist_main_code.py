@@ -325,10 +325,11 @@ def main(args):
  
     #cur_training_images, cur_test_images = frogger_dataset_ob.load_images(current_image_dir, tr_good_ids, te_good_ids,tr_indices)
     
-        
+
     train_data_loader = get_loader(
         in_vocab, train_image_features, train_sentences, train_image_names, train_transform,
         batch_size = args.batch_size, shuffle=True, num_workers=0)
+
 
     val_data_loader = get_loader(
         in_vocab, val_image_features, val_sentences, val_image_names, val_transform,
