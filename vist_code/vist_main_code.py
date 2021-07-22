@@ -210,20 +210,16 @@ def main(args):
     # preprocess the train data
     #train_story_keys = preprocess_stories(home_dir, train_pickle_dir, train_story_data, train_story_keys)
     # grab the image features
-    train_image_features = grab_features(home_dir, train_pickle_dir, train_story_data, train_story_keys)
+    train_image_features, train_image_names = grab_features(home_dir, train_pickle_dir, train_story_data, train_story_keys)
     # vectorize sentences
     train_sentences = vect_sentences(train_story_data, train_story_keys, in_vocab)
-
-    print(train_sentences[0])
 
     # preprocess the val_data
     #val_story_keys = preprocess_stories(home_dir, val_pickle_dir, val_story_data, val_story_keys)
     # grab the image features
-    val_image_features = grab_features(home_dir, val_pickle_dir, val_story_data, val_story_keys)
+    val_image_features, val_image_names = grab_features(home_dir, val_pickle_dir, val_story_data, val_story_keys)
     # vectorize sentences
     val_sentences = vect_sentences(val_story_data, val_story_keys, in_vocab)
-
-    print(val_sentences[0])
 
     # change this
     # # val data
@@ -247,14 +243,6 @@ def main(args):
     # print(f'Number of story ids: {len(train_story_keys)}')
 
     # val data
-
-    train_image_features = []
-
-    train_sentences = []
-
-    val_image_features = []
-
-    val_sentences = []
 
     # batch_size = 8
 
@@ -339,11 +327,11 @@ def main(args):
     
         
     train_data_loader = get_loader(
-        in_vocab, train_image_features, train_sentences, train_transform,
+        in_vocab, train_image_features, train_sentences, train_image_names, train_transform,
         batch_size = args.batch_size, shuffle=True, num_workers=0)
 
     val_data_loader = get_loader(
-        in_vocab, val_image_features, val_sentences, val_transform,
+        in_vocab, val_image_features, val_sentences, val_image_names, val_transform,
         batch_size = args.batch_size, shuffle=True, num_workers=0)
 
     # val_losses = []

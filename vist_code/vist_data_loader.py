@@ -8,11 +8,11 @@ from PIL import Image
 
 class VistDataLoader(data.Dataset):
     
-    def __init__(self, vocab, v_sent, img_features): #story_keys, vocab, batch_size)# home_dir, pickle_dir):
+    def __init__(self, vocab, v_sent, img_features, img_names): #story_keys, vocab, batch_size)# home_dir, pickle_dir):
         # self.keys = story_keys
         # self.vocab = vocab
         # self.batch_size = 8
-
+        self.img_names = img_names
         self.img_features = img_features
         self.v_sent = v_sent
         self.vocab = vocab
@@ -22,29 +22,30 @@ class VistDataLoader(data.Dataset):
         
         
     def __len__(self):
-        if len(self.images) != len(self.sentences):
-            print("Number of images should match sentences")
-            return
-        return len(images)
+        # if len(self.img_features) != len(self.v_sent):
+        #     print("Number of images should match sentences")
+        #     return
+        return len(self.img_features)
         
         
     def __getitem__(self, index):
 
+        img_name = self.img_names[index]
+
+        img_features = self.img_features[index]
         
-        img_features = self.image_features[index]
-        
-        vect_sent = self.vect_sentences[index]
+        vect_sent = self.v_sent[index]
 
         x = torch.Tensor(img_features)
         y = torch.Tensor(vect_sent) # add padding if this throws an error
         
-        return x, y
+        return img_name, x, y
         
 
         
 
-def get_loader(vocab, img_features, v_sent, transform, batch_size, shuffle, num_workers): # maybe add transform, pkl_dir, vocab
-    vist = VistDataLoader(vocab, v_sent, img_features)
+def get_loader(vocab, image_features, image_names, v_sent, transform, batch_size, shuffle, num_workers): # maybe add transform, pkl_dir, vocab
+    vist = VistDataLoader(vocab, v_sent, image_features, image_names)
     
     data_loader = torch.utils.data.DataLoader(dataset=vist, batch_size=batch_size, num_workers=num_workers) # default collate_fn
     return data_loader

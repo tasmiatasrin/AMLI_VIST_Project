@@ -37,6 +37,7 @@ def grab_features(home_dir, pickle_dir, story_data, story_keys):
     os.chdir(pickle_dir) # change to pkl directory
 
     features = []
+    img_names = []
     
     new_len = 0 # used for printing
 
@@ -44,21 +45,28 @@ def grab_features(home_dir, pickle_dir, story_data, story_keys):
         for image in story_data[key]['images']: # image list of each story_id
         
             if image + '.pkl' in os.listdir(pickle_dir): # check if in pickle_dir
+                
                 pkl_file = open(image + '.pkl', 'rb') # open pickle file
                 one_feature = pkl.load(pkl_file) # grab feature
-                
+
                 features.append(one_feature) # store features
+
+                img_names.append(int(image)) # stores the id of the image
                 
-                # loading print
-                if len(features)%1000 == 0:
+                # loading print change this to %1000 == 0
+                if len(features) == 1000:
                     print(f"Extracted {len(features)} features")
-                
+                    break
+        if len(features) == 1000:
+                    print(f"Extracted {len(features)} features")
+                    break        
+
     print(f'Finished! Length of features: {len(features)}')
     
     # go back to home dir
     os.chdir(home_dir)
 
-    return features
+    return features, img_names
 
 
 def vect_sentences(story_data, story_keys, vocab):
@@ -79,6 +87,13 @@ def vect_sentences(story_data, story_keys, vocab):
                 v_sentence.append(v_word)
             vector_sentences.append(v_sentence) # store the set of 5 sentences
 
+            if len(vector_sentences) == 10000:
+                break
+        if len(vector_sentences) == 10000:
+                break
+
     print(f'Finished! Length of sentences: {len(vector_sentences)}') 
 
     return vector_sentences
+
+# def ids_to_words:
