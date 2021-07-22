@@ -1,12 +1,12 @@
 import argparse
-from methods import grab_features, preprocess_stories, vect_sentences
+from vist_methods import grab_features, preprocess_stories, vect_sentences
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 # from build_vocab_v2 import Vocabulary
 from torchvision import transforms
-from data_loader_vist import get_loader
+from vist_data_loader import get_loader
 #from frogger_dataset_preprocessed import FroggerDataset
 import pickle
 from PIL import Image
@@ -76,21 +76,26 @@ import json
 
 
 
-
-
 def weight_gloVe(target_vocab):
     # words = pickle.load(open(f'glove.6B/6B.300_words.pkl', 'rb'))
     # word2idx = pickle.load(open(f'glove.6B/6B.300_idx.pkl', 'rb'))
     # vectors = bcolz.open(f'glove.6B/6B.300.dat')[:]
-    glove = pickle.load(open(f'glove/6B_300_words_emb.pkl', 'rb'))
 
-    matrix_len = len(target_vocab.word2idx)
+    glove_dir = '/Users/javi/Downloads/example_NACME/vist_code/glove/'
+
+    os.chdir(glove_dir)
+
+    glove = pickle.load(open(f'6B_300_words_emb.pkl', 'rb'))
+
+    matrix_len = len(target_vocab)
     weights_matrix = np.zeros((matrix_len, 300))
     words_found = 0
     emb_dim = 300
 
     for i in range(matrix_len):
-        word = target_vocab.idx2word[i]
+        all_words = list(target_vocab.keys())
+
+        word = all_words[i]
         try: 
             weights_matrix[i] = glove[word]
             words_found += 1
@@ -98,10 +103,12 @@ def weight_gloVe(target_vocab):
             weights_matrix[i] = np.random.normal(scale=0.6, size=(emb_dim, ))
     
     print("words_found: ", words_found)
-    
+
+    home_dir = '/Users/javi/Downloads/example_NACME/'
+
+    os.chdir(home_dir)
+
     return weights_matrix
-
-
 
 # how do we update this???
 # where do the data_indices go
@@ -161,45 +168,65 @@ def update_data_loader(vist_dataset, data_indices):
 
 def main(args):
 
-    # home dir
-    home_dir = '/Users/javi/Desktop/AMLI/Capstone/2_vocabulary_and_data_loader'
-
-    os.chdir(home_dir)
+    # directories
+    home_dir = '/Users/javi/Downloads/example_NACME/'
+    train_pickle_dir = '/Users/javi/Desktop/AMLI/Capstone/1_story_dictionary_and_pickles/train_pickles/'
+    val_pickle_dir = '/Users/javi/Desktop/AMLI/Capstone/1_story_dictionary_and_pickles/val_pickles/'
+    dict_dir = '/Users/javi/Downloads/example_NACME/dictionaries/'
 
     # grab train, test, val data
-
-    # train data
-    train_pickle_dir = '/Users/javi/Desktop/AMLI/Capstone/1_story_dictionary_and_pickles/pickles/'
+    # grab vocabularies
+    os.chdir(dict_dir)
 
     # open JSON file
-    d = open('tsplit1_dictionary.json')
-    v = open('6_complete_vocabulary.json') # vocabulary
+    train_data = open('train_data.json') # train_story_ids
+    val_data = open('val_data.json') # val_story_ids
 
+    # vocabularies
+    words2ids = open('words_to_ids.json') # words to ids
+    ids2words = open('ids_to_words.json')  # ids to words
+
+    os.chdir(home_dir)
+    
     # returns JSON object as a dictionary
-    train_story_data = json.load(d)
-    vocab = json.load(v) # do I need to seperate the vocab for test and val or can it be all in one vocabulary
+    train_story_data = json.load(train_data)
+    val_story_data = json.load(val_data)
+    in_vocab = json.load(words2ids) # do I need to seperate the vocab for test and val or can it be all in one vocabulary
+    out_vocab = json.load(ids2words)
+
+    # print(len(train_story_data),len(val_story_data),len(in_vocab), print(len(out_vocab)))
 
     # close file
-    d.close
-    v.close
+    train_data.close
+    val_data.close
+    words2ids.close
+    ids2words.close
 
     # grab the keys
     train_story_keys = [key for key in train_story_data.keys()]
-    print(f'Number of story ids: {len(train_story_keys)}')
+    val_story_keys = [key for key in val_story_data.keys()]
+    print(f'Number of story ids: Train:{len(train_story_keys)}, Val:{len(val_story_keys)}')
 
-    # this code works
-    # # preprocess the data
-    # train_story_keys = preprocess_stories(home_dir, pickle_dir, train_story_data, train_story_keys)
+    # preprocess the train data
+    #train_story_keys = preprocess_stories(home_dir, train_pickle_dir, train_story_data, train_story_keys)
+    # grab the image features
+    train_image_features = grab_features(home_dir, train_pickle_dir, train_story_data, train_story_keys)
+    # vectorize sentences
+    train_sentences = vect_sentences(train_story_data, train_story_keys, in_vocab)
 
-    # # grab the image features
-    # train_image_features = grab_features(home_dir, pickle_dir, story_data, story_keys)
+    print(train_sentences[0])
 
-    # # vectorize sentences
-    # train_sentences = vect_sentences(story_data, story_keys, vocab)
+    # preprocess the val_data
+    #val_story_keys = preprocess_stories(home_dir, val_pickle_dir, val_story_data, val_story_keys)
+    # grab the image features
+    val_image_features = grab_features(home_dir, val_pickle_dir, val_story_data, val_story_keys)
+    # vectorize sentences
+    val_sentences = vect_sentences(val_story_data, val_story_keys, in_vocab)
 
+    print(val_sentences[0])
 
-    pass # change this
-    # # test data
+    # change this
+    # # val data
     # # train data
     # test_pickle_dir = '/Users/javi/Desktop/AMLI/Capstone/1_story_dictionary_and_pickles/pickles_test/'
 
@@ -225,7 +252,11 @@ def main(args):
 
     train_sentences = []
 
-    batch_size = 8
+    val_image_features = []
+
+    val_sentences = []
+
+    # batch_size = 8
 
     # vist_dataset = get_loader(train_image_features, train_sentences, train_transform, batch_size = 8,num_workers=0)
 
@@ -308,12 +339,12 @@ def main(args):
     
         
     train_data_loader = get_loader(
-        vocab, train_image_features, train_sentences, train_transform,
+        in_vocab, train_image_features, train_sentences, train_transform,
         batch_size = args.batch_size, shuffle=True, num_workers=0)
 
-    # val_data_loader = get_loader(
-    #     vocab, test_image_features, test_sentences, test_transform,
-    #     batch_size = args.batch_size, shuffle=True, num_workers=0)
+    val_data_loader = get_loader(
+        in_vocab, val_image_features, val_sentences, val_transform,
+        batch_size = args.batch_size, shuffle=True, num_workers=0)
 
     # val_losses = []
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
