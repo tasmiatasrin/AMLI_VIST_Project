@@ -82,7 +82,7 @@ def weight_gloVe(target_vocab):
     # word2idx = pickle.load(open(f'glove.6B/6B.300_idx.pkl', 'rb'))
     # vectors = bcolz.open(f'glove.6B/6B.300.dat')[:]
 
-    glove_dir = '/Users/jcollins/Desktop/AMLI/Capstone/vist_code/glove'
+    glove_dir = glove_dir = '/Users/jcollins/Desktop/AMLI/Capstone/vist_code/glove'
 
     os.chdir(glove_dir)
 
@@ -157,6 +157,7 @@ def update_data_loader(vist_dataset, data_indices):
     train_data_loader = get_loader(train_sentences, train_image_features,
                                 pickle_dir, home_dir, batch_size, vocab, train_transform,
                                 num_workers=0)
+    print
     val_data_loader = get_loader(val_sentences, val_image_features,
                                 pickle_dir, home_dir, batch_size, vocab, val_transform,
                                 num_workers=0)
@@ -210,16 +211,19 @@ def main(args):
     # preprocess the train data
     #train_story_keys = preprocess_stories(home_dir, train_pickle_dir, train_story_data, train_story_keys)
     # grab the image features
-    train_image_features, train_image_names = grab_features(home_dir, train_pickle_dir, train_story_data, train_story_keys)
+    train_image_features, train_image_names, train_sentences = grab_features(home_dir, train_pickle_dir, train_story_data, train_story_keys, in_vocab)
     # vectorize sentences
-    train_sentences = vect_sentences(train_story_data, train_story_keys, in_vocab)
+
+    print(len(train_sentences), len(train_image_features))
+    train_sentences = vect_sentences(train_sentences, in_vocab)
+    print(train_sentences[50])
 
     # preprocess the val_data
     #val_story_keys = preprocess_stories(home_dir, val_pickle_dir, val_story_data, val_story_keys)
     # grab the image features
-    val_image_features, val_image_names = grab_features(home_dir, val_pickle_dir, val_story_data, val_story_keys)
+    val_image_features, val_image_names, val_sentences = grab_features(home_dir, val_pickle_dir, val_story_data, val_story_keys, in_vocab)
     # vectorize sentences
-    val_sentences = vect_sentences(val_story_data, val_story_keys, in_vocab)
+    val_sentences = vect_sentences(val_sentences, in_vocab)
 
     # change this
     # # val data
@@ -331,7 +335,7 @@ def main(args):
         batch_size = args.batch_size, shuffle=True, num_workers=0)
 
     val_data_loader = get_loader(
-        in_vocab, val_image_features, val_sentences, val_image_names, val_transform,
+        out_vocab, val_image_features, val_sentences, val_image_names, val_transform,
         batch_size = args.batch_size, shuffle=True, num_workers=0)
     print(type(train_data_loader))
     # val_losses = []
@@ -460,7 +464,7 @@ def main(args):
                         grnd_cap = out_vocab[str(grnd_)]
                         caption_grndtrth = caption_grndtrth + " " + grnd_cap
                     
-                    image_name = img_name [i]
+                    image_name = img_name[i]
                     
                     
                     results.append({u'image name': image_name, u'generated caption': caption_str, u'ground_truth_cap': caption_grndtrth})
@@ -490,8 +494,8 @@ def main(args):
         # Save the weights.
         if epoch % 10 == 0:
             print("\nSaving the model")
-            torch.save(decoder.state_dict(), os.path.join('models/', 'decoder_V1-%d.pth' % epoch))
-            torch.save(encoder.state_dict(), os.path.join('models/', 'encoderV1-%d.pth' % epoch))
+            torch.save(decoder.state_dict(), os.path.join('models/', 'decoder_V2-%d.pth' % epoch))
+            torch.save(encoder.state_dict(), os.path.join('models/', 'encoderV2-%d.pth' % epoch))
             my_advice = list(results)
             inference_advice = list(inference_results)
             json.dump(my_advice,open('result-v1-epoch-%d.json' % epoch,'w'))  
@@ -579,4 +583,3 @@ if __name__ == '__main__':
 #     print("caption_str: ", caption_str)
     
 #     return encoded_img, caption_str
-    
